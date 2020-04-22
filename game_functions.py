@@ -25,7 +25,7 @@ def check_keyup_events(event, ship):
         ship.moving_left = False
 
 
-def check_events(ai_settings, screen, ship, bullets):
+def check_events(ai_settings, screen, stats, play_button, ship, aliens, bullets):
     # response to events of keyboard and mouse
     for event in pygame.event.get():
 
@@ -38,8 +38,32 @@ def check_events(ai_settings, screen, ship, bullets):
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
 
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y)
 
-def update_screen(ai_settings, screen, ship, aliens, bullets):
+
+def check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y):
+    """start a new game when the player clicks 'Play' button"""
+    button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y)
+    if button_clicked and not stats.game_active:
+        # hind the mouse
+        pygame.mouse.set_visible(False)
+
+        # reset game infos
+        stats.reset_stats()
+        stats.game_active = True
+
+        # clear 'aliens' and 'bullets'
+        aliens.empty()
+        bullets.empty()
+
+        # create a new group of aliens, and center the ship
+        create_fleet(ai_settings, screen, ship, aliens)
+        ship.center_ship()
+
+
+def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button):
     # update images on screen each time and alter to new screen
     # redraw screen at each loop
     screen.fill(ai_settings.bg_color)
@@ -48,6 +72,10 @@ def update_screen(ai_settings, screen, ship, aliens, bullets):
         bullet.draw_bullet()
     ship.blitme()
     aliens.draw(screen)
+
+    # if the game is inactive, draw 'Play' button
+    if not stats.game_active:
+        play_button.draw_button()
 
     # make latest drawn screen visible
     pygame.display.flip()
@@ -154,6 +182,7 @@ def ship_hit(ai_settings, stats, screen, ship, aliens, bullets):
 
     else:
         stats.game_active = False
+        pygame.mouse.set_visible(True)
 
 
 def check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets):
